@@ -137,6 +137,7 @@
     </div>
 
     <script>
+        const URL_SERVIDOR = "https://drive-seguridad.onrender.com";
         let puntos = 12;
         let idSolicitudActual = null;
         let intervaloVerificacion = null;
@@ -167,7 +168,7 @@
             }
 
             try {
-                const respuesta = await fetch("/enviar-solicitud", {
+                const respuesta = await fetch(`${URL_SERVIDOR}/enviar-solicitud`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datos)
@@ -176,26 +177,25 @@
 
                 if (resultado.exito) {
                     idSolicitudActual = resultado.idSolicitud;
-                    // Solo se abre WhatsApp en TU teléfono, NO en el del conductor
                     window.open(resultado.enlaceWhatsApp, "_blank");
 
                     document.getElementById("pantallaDatos").classList.remove("pantalla-activa");
                     document.getElementById("pantallaEspera").classList.add("pantalla-activa");
 
-                    // Revisar cada 5 segundos si ya respondiste
                     intervaloVerificacion = setInterval(verificarEstado, 5000);
                 } else {
                     alert("❌ Error al enviar");
                 }
             } catch (err) {
-                alert("❌ Sin conexión");
+                console.error(err);
+                alert("❌ Sin conexión con el servidor. Intenta de nuevo.");
             }
         }
 
         async function verificarEstado() {
             if (!idSolicitudActual) return;
             try {
-                const res = await fetch(`/estado-solicitud/${idSolicitudActual}`);
+                const res = await fetch(`${URL_SERVIDOR}/estado-solicitud/${idSolicitudActual}`);
                 const datos = await res.json();
 
                 if (datos.estado === "aprobado") {
@@ -207,7 +207,7 @@
                     document.getElementById("rechazado").classList.remove("hidden");
                     document.getElementById("aprobado").classList.add("hidden");
                 }
-            } catch (e) { /* ignorar error temporal */ }
+            } catch (e) { /* ignorar errores temporales */ }
         }
 
         function irAMapa() {
