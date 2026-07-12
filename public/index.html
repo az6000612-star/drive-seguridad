@@ -12,8 +12,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <script>
         tailwind.config = {
@@ -29,15 +27,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f3f4f6; }
-        .vel-grande { font-size: 2.5rem; font-weight: bold; }
-        .estado-parpadeo { animation: parpadeo 2s infinite; }
-        @keyframes parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         #pantallaLogo { display: flex; }
         #pantallaDatos, #pantallaMapa, #pantallaEspera { display: none; }
         .pantalla-activa { display: block !important; }
-        #mapa { height: 55vh; border-radius: 12px; width: 100%; }
-        .info-navegacion { background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .pregunta-seguridad { padding: 10px; margin-bottom: 8px; border-radius: 6px; background: #f9fafb; border-left: 3px solid #0F4C81; }
         .pantalla-espera { padding: 2rem; text-align: center; margin: 2rem 0; border-radius: 1rem; background: #fffbeb; border: 2px solid #fbbf24; }
     </style>
 </head>
@@ -76,25 +68,12 @@
 
         <div class="bg-white rounded-xl shadow p-4 mb-5">
             <h4 class="text-base font-semibold mb-3">📋 Revisión de Seguridad</h4>
-            <div class="pregunta-seguridad">
-                <label>¿Revisó aceite, frenos y llantas?</label>
-                <select id="revVeh" required><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select>
-            </div>
-            <div class="pregunta-seguridad">
-                <label>¿Cuenta con equipo de seguridad?</label>
-                <select id="revEquipo" required><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select>
-            </div>
-            <div class="pregunta-seguridad">
-                <label>¿Descansó y no bebió alcohol?</label>
-                <select id="revDescanso" required><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select>
-            </div>
-            <div class="pregunta-seguridad">
-                <label>¿Documentos al día?</label>
-                <select id="revDoc" required><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select>
-            </div>
-            <div class="pregunta-seguridad">
-                <label>Observaciones:</label>
-                <textarea id="observaciones" rows="2" class="w-full p-2 border rounded-lg"></textarea>
+            <div class="space-y-3">
+                <div><label>¿Revisó aceite, frenos y llantas?</label><select id="revVeh" class="w-full p-2 border rounded"><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select></div>
+                <div><label>¿Cuenta con equipo de seguridad?</label><select id="revEquipo" class="w-full p-2 border rounded"><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select></div>
+                <div><label>¿Descansó y no bebió alcohol?</label><select id="revDescanso" class="w-full p-2 border rounded"><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select></div>
+                <div><label>¿Documentos al día?</label><select id="revDoc" class="w-full p-2 border rounded"><option value="">Seleccione</option><option value="ok">Sí</option><option value="no">No</option></select></div>
+                <div><label>Observaciones:</label><textarea id="observaciones" rows="2" class="w-full p-2 border rounded"></textarea></div>
             </div>
         </div>
 
@@ -109,17 +88,13 @@
         </header>
         <div class="pantalla-espera">
             <h2 class="text-2xl font-bold text-amber-700 mb-4">⏳ SOLICITUD ENVIADA</h2>
-            <p class="mb-4">Esperando autorización...</p>
+            <p class="mb-4">Esperando tu autorización por WhatsApp...</p>
             <p class="text-sm text-gray-500">No cierres la aplicación</p>
-            <br>
-            <p class="text-xs text-gray-400">Actualiza la página en cuanto te confirmen</p>
         </div>
         <div id="aprobado" class="hidden bg-green-50 border border-green-300 rounded-xl p-5 text-center mt-4">
             <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE - AUTORIZADO</h3>
             <p class="mb-4">Todo en regla, puede iniciar el viaje</p>
-            <button onclick="irAMapa()" class="w-full bg-success text-white p-3 rounded-lg font-semibold">
-                <i class="fa fa-play mr-2"></i> Iniciar Viaje
-            </button>
+            <button onclick="irAMapa()" class="w-full bg-success text-white p-3 rounded-lg font-semibold">Iniciar Viaje</button>
         </div>
         <div id="rechazado" class="hidden bg-red-50 border border-red-300 rounded-xl p-5 text-center mt-4">
             <h3 class="text-xl font-bold text-red-700 mb-3">❌ LUZ ROJA - NO AUTORIZADO</h3>
@@ -134,17 +109,14 @@
             <div><h2 class="font-semibold">NAVEGACIÓN</h2><p class="text-xs">→ <span id="destinoActual"></span></p></div>
             <div class="bg-primary text-white px-3 py-1 rounded-lg font-bold"><span id="puntosMapa">12</span> pts</div>
         </div>
-        <div id="mapa" class="mb-3"></div>
-        <button onclick="finalizarViaje()" class="w-full bg-danger text-white p-3 rounded-xl">
-            <i class="fa fa-stop mr-2"></i> Finalizar Viaje
-        </button>
+        <div id="mapa" class="h-[55vh] rounded-xl mb-3"></div>
+        <button onclick="finalizarViaje()" class="w-full bg-danger text-white p-3 rounded-xl">Finalizar Viaje</button>
     </div>
 
     <script>
         const URL_SERVIDOR = "https://drive-seguridad.onrender.com";
-        let puntos = 12;
-        let idSolicitudActual = null;
-        let intervaloVerificacion = null;
+        let codigoActual = null;
+        let intervalo = null;
 
         function irADatos() {
             document.getElementById("pantallaLogo").style.display = "none";
@@ -172,74 +144,55 @@
             }
 
             try {
-                const respuesta = await fetch(`${URL_SERVIDOR}/enviar-solicitud`, {
+                const res = await fetch(`${URL_SERVIDOR}/enviar-solicitud`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datos)
                 });
-                const resultado = await respuesta.json();
+                const resultado = await res.json();
 
                 if (resultado.exito) {
-                    idSolicitudActual = resultado.idSolicitud;
-                    // 📱 Se abre TU WhatsApp con el mensaje
+                    codigoActual = resultado.codigo;
+                    // Se abre TU WhatsApp con el código de 4 dígitos
                     window.open(resultado.enlaceWhatsApp, "_blank");
 
                     document.getElementById("pantallaDatos").classList.remove("pantalla-activa");
                     document.getElementById("pantallaEspera").classList.add("pantalla-activa");
 
-                    // ⏱️ Revisa el estado cada 3 segundos
-                    intervaloVerificacion = setInterval(verificarEstado, 3000);
-                } else {
-                    alert("❌ Error al enviar");
+                    // Revisa cada 3 segundos si ya respondiste
+                    intervalo = setInterval(verificarEstado, 3000);
                 }
             } catch (err) {
-                console.error(err);
-                alert("❌ Sin conexión. Intenta de nuevo.");
+                alert("❌ Sin conexión");
             }
         }
 
         async function verificarEstado() {
-            if (!idSolicitudActual) return;
+            if (!codigoActual) return;
             try {
-                const res = await fetch(`${URL_SERVIDOR}/estado-solicitud/${idSolicitudActual}`);
+                const res = await fetch(`${URL_SERVIDOR}/estado/${codigoActual}`);
                 const datos = await res.json();
 
                 if (datos.estado === "aprobado") {
-                    clearInterval(intervaloVerificacion);
+                    clearInterval(intervalo);
                     document.getElementById("aprobado").classList.remove("hidden");
-                    document.getElementById("rechazado").classList.add("hidden");
                 } else if (datos.estado === "rechazado") {
-                    clearInterval(intervaloVerificacion);
+                    clearInterval(intervalo);
                     document.getElementById("rechazado").classList.remove("hidden");
-                    document.getElementById("aprobado").classList.add("hidden");
                 }
-            } catch (e) { /* ignorar errores temporales */ }
-        }
-
-        // 📲 ESTA ES TU HERRAMIENTA: para que tú des la luz verde desde tu celular
-        async function autorizarManual(id, decision) {
-            try {
-                await fetch(`${URL_SERVIDOR}/respuesta-autorizacion`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: id, decision: decision })
-                });
-                alert(`✅ Listo! ${decision === "verde" ? "Luz Verde enviada" : "Luz Roja enviada"}`);
-            } catch (err) {
-                alert("❌ Error al autorizar");
-            }
+            } catch (e) {}
         }
 
         function irAMapa() {
             document.getElementById("pantallaEspera").classList.remove("pantalla-activa");
             document.getElementById("pantallaMapa").classList.add("pantalla-activa");
             document.getElementById("destinoActual").textContent = document.getElementById("destino").value;
-            iniciarMapa();
+            L.map('mapa').setView([-0.46, -76.98], 12).addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
         }
 
         function volverADatos() {
-            clearInterval(intervaloVerificacion);
-            idSolicitudActual = null;
+            clearInterval(intervalo);
+            codigoActual = null;
             document.getElementById("pantallaEspera").classList.remove("pantalla-activa");
             document.getElementById("pantallaMapa").classList.remove("pantalla-activa");
             document.getElementById("aprobado").classList.add("hidden");
@@ -247,20 +200,10 @@
             document.getElementById("pantallaDatos").classList.add("pantalla-activa");
         }
 
-        function iniciarMapa() {
-            L.map('mapa').setView([-0.46, -76.98], 12).addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
-        }
-
         function finalizarViaje() {
             alert("✅ Viaje finalizado");
             volverADatos();
         }
     </script>
-
-    <!-- ✅ SOLO PARA TI: Botones ocultos para autorizar -->
-    <div style="position:fixed;top:10px;right:10px;z-index:9999;display:flex;gap:8px;">
-        <button onclick="const id=prompt('Ingresa el código de solicitud:'); if(id) autorizarManual(id,'verde')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">LUZ VERDE</button>
-        <button onclick="const id=prompt('Ingresa el código de solicitud:'); if(id) autorizarManual(id,'rojo')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">LUZ ROJA</button>
-    </div>
 </body>
 </html>
