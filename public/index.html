@@ -109,18 +109,22 @@
         </header>
         <div class="pantalla-espera">
             <h2 class="text-2xl font-bold text-amber-700 mb-4">⏳ SOLICITUD ENVIADA</h2>
-            <p class="mb-4">Esperando tu aprobación desde WhatsApp...</p>
+            <p class="mb-4">Esperando autorización...</p>
             <p class="text-sm text-gray-500">No cierres la aplicación</p>
+            <br>
+            <p class="text-xs text-gray-400">Actualiza la página en cuanto te confirmen</p>
         </div>
         <div id="aprobado" class="hidden bg-green-50 border border-green-300 rounded-xl p-5 text-center mt-4">
-            <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE</h3>
-            <p class="mb-4">Viaje autorizado</p>
-            <button onclick="irAMapa()" class="w-full bg-success text-white p-3 rounded-lg">Iniciar Viaje</button>
+            <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE - AUTORIZADO</h3>
+            <p class="mb-4">Todo en regla, puede iniciar el viaje</p>
+            <button onclick="irAMapa()" class="w-full bg-success text-white p-3 rounded-lg font-semibold">
+                <i class="fa fa-play mr-2"></i> Iniciar Viaje
+            </button>
         </div>
         <div id="rechazado" class="hidden bg-red-50 border border-red-300 rounded-xl p-5 text-center mt-4">
-            <h3 class="text-xl font-bold text-red-700 mb-3">❌ LUZ ROJA</h3>
-            <p class="mb-4">No autorizado, revise requisitos</p>
-            <button onclick="volverADatos()" class="w-full bg-gray-500 text-white p-3 rounded-lg">Volver</button>
+            <h3 class="text-xl font-bold text-red-700 mb-3">❌ LUZ ROJA - NO AUTORIZADO</h3>
+            <p class="mb-4">Corrige lo indicado y vuelve a enviar</p>
+            <button onclick="volverADatos()" class="w-full bg-gray-500 text-white p-3 rounded-lg">Volver a revisar</button>
         </div>
     </div>
 
@@ -177,18 +181,20 @@
 
                 if (resultado.exito) {
                     idSolicitudActual = resultado.idSolicitud;
+                    // 📱 Se abre TU WhatsApp con el mensaje
                     window.open(resultado.enlaceWhatsApp, "_blank");
 
                     document.getElementById("pantallaDatos").classList.remove("pantalla-activa");
                     document.getElementById("pantallaEspera").classList.add("pantalla-activa");
 
-                    intervaloVerificacion = setInterval(verificarEstado, 5000);
+                    // ⏱️ Revisa el estado cada 3 segundos
+                    intervaloVerificacion = setInterval(verificarEstado, 3000);
                 } else {
                     alert("❌ Error al enviar");
                 }
             } catch (err) {
                 console.error(err);
-                alert("❌ Sin conexión con el servidor. Intenta de nuevo.");
+                alert("❌ Sin conexión. Intenta de nuevo.");
             }
         }
 
@@ -208,6 +214,20 @@
                     document.getElementById("aprobado").classList.add("hidden");
                 }
             } catch (e) { /* ignorar errores temporales */ }
+        }
+
+        // 📲 ESTA ES TU HERRAMIENTA: para que tú des la luz verde desde tu celular
+        async function autorizarManual(id, decision) {
+            try {
+                await fetch(`${URL_SERVIDOR}/respuesta-autorizacion`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: id, decision: decision })
+                });
+                alert(`✅ Listo! ${decision === "verde" ? "Luz Verde enviada" : "Luz Roja enviada"}`);
+            } catch (err) {
+                alert("❌ Error al autorizar");
+            }
         }
 
         function irAMapa() {
@@ -236,5 +256,11 @@
             volverADatos();
         }
     </script>
+
+    <!-- ✅ SOLO PARA TI: Botones ocultos para autorizar -->
+    <div style="position:fixed;top:10px;right:10px;z-index:9999;display:flex;gap:8px;">
+        <button onclick="const id=prompt('Ingresa el código de solicitud:'); if(id) autorizarManual(id,'verde')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">LUZ VERDE</button>
+        <button onclick="const id=prompt('Ingresa el código de solicitud:'); if(id) autorizarManual(id,'rojo')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">LUZ ROJA</button>
+    </div>
 </body>
 </html>
