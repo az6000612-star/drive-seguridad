@@ -46,26 +46,20 @@
         #mapa { height: 55vh; border-radius: 12px; z-index: 1; width: 100%; }
         .info-navegacion { background: #ffffff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .ruta-linea { stroke: #2563eb; stroke-width: 5; stroke-opacity: 0.8; }
-        /* Estilos para el buscador */
         .buscador-container { position: relative; margin-bottom: 10px; }
         #inputBuscador { width: 100%; padding: 10px 35px 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
         .icono-buscar { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #666; }
         #listaResultados { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 0 0 8px 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); z-index: 1000; max-height: 220px; overflow-y: auto; display: none; }
         .item-resultado { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; }
         .item-resultado:hover { background: #f8fafc; }
-        /* Estilos para preguntas de seguridad */
         .pregunta-seguridad { padding: 10px; margin-bottom: 8px; border-radius: 6px; background: #f9fafb; border-left: 3px solid #0F4C81; }
         .pregunta-seguridad label { font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px; }
         .pregunta-seguridad select, .pregunta-seguridad textarea { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
-        /* Estilos pantalla de espera */
         .pantalla-espera { padding: 2rem; text-align: center; margin: 2rem 0; border-radius: 1rem; background: #fffbeb; border: 2px solid #fbbf24; }
     </style>
 </head>
 <body>
 
-    <!-- ====================================== -->
-    <!-- PANTALLA 1: LOGO DE INICIO -->
-    <!-- ====================================== -->
     <div id="pantallaLogo" class="w-full h-screen bg-inicio flex flex-col justify-center items-center text-center p-6">
         <h1 class="text-7xl font-bold text-green-400 mb-6">DRIVE</h1>
         <p class="text-white text-xl mb-12">Sincronizando un manejo seguro</p>
@@ -74,9 +68,6 @@
         </button>
     </div>
 
-    <!-- ====================================== -->
-    <!-- PANTALLA 2: DATOS DEL VIAJE + SEGURIDAD -->
-    <!-- ====================================== -->
     <div id="pantallaDatos" class="max-w-md mx-auto p-4">
         <header class="bg-primary text-white p-4 rounded-xl shadow-lg mb-5">
             <div class="flex justify-between items-center">
@@ -107,7 +98,6 @@
             </div>
         </div>
 
-        <!-- ✅ REVISIÓN DE SEGURIDAD -->
         <div class="bg-white rounded-xl shadow p-4 mb-5">
             <h4 class="text-base font-semibold text-gray-700 mb-3">📋 Revisión de Seguridad</h4>
 
@@ -116,7 +106,6 @@
                 <select id="revVehiculo" required>
                     <option value="">Seleccione</option>
                     <option value="ok">Sí, todo en orden</option>
-                    <option value="parcial">Revisión parcial</option>
                     <option value="no">No, tiene fallas</option>
                 </select>
             </div>
@@ -126,7 +115,6 @@
                 <select id="revEquipo" required>
                     <option value="">Seleccione</option>
                     <option value="ok">Sí, completo</option>
-                    <option value="parcial">Faltan algunos</option>
                     <option value="no">No cuenta con equipo</option>
                 </select>
             </div>
@@ -136,8 +124,7 @@
                 <select id="revDescanso" required>
                     <option value="">Seleccione</option>
                     <option value="ok">Sí, descansado y sin alcohol</option>
-                    <option value="regular">Normal</option>
-                    <option value="cansado">Algo cansado</option>
+                    <option value="no">No, cansado o consumió alcohol</option>
                 </select>
             </div>
 
@@ -146,7 +133,6 @@
                 <select id="revDocumentos" required>
                     <option value="">Seleccione</option>
                     <option value="ok">Sí, todo en regla</option>
-                    <option value="parcial">Falta revisar ruta</option>
                     <option value="no">Faltan documentos</option>
                 </select>
             </div>
@@ -157,8 +143,8 @@
             </div>
         </div>
 
-        <button onclick="enviarSolicitud()" class="w-full bg-primary hover:bg-primary/90 text-white p-4 rounded-xl shadow-lg text-lg font-semibold mb-3">
-            <i class="fa fa-paper-plane mr-2"></i> Enviar para autorización
+        <button onclick="enviarSolicitudAutomatica()" class="w-full bg-primary hover:bg-primary/90 text-white p-4 rounded-xl shadow-lg text-lg font-semibold mb-3">
+            <i class="fa fa-paper-plane mr-2"></i> Enviar solicitud
         </button>
 
         <div id="bloqueo" class="hidden bg-red-50 border border-red-300 rounded-xl p-4 text-center mt-4">
@@ -167,9 +153,6 @@
         </div>
     </div>
 
-    <!-- ====================================== -->
-    <!-- PANTALLA DE ESPERA DE AUTORIZACIÓN -->
-    <!-- ====================================== -->
     <div id="pantallaEspera" class="max-w-md mx-auto p-4">
         <header class="bg-primary text-white p-4 rounded-xl shadow-lg mb-5">
             <button onclick="volverADatos()" class="text-white text-lg">
@@ -179,34 +162,27 @@
 
         <div class="pantalla-espera">
             <h2 class="text-2xl font-bold text-amber-700 mb-4">⏳ SOLICITUD ENVIADA</h2>
-            <p class="text-gray-700 mb-4">Se ha enviado tu solicitud de salida para revisión.</p>
-            <p class="text-gray-700 mb-6">Espera a que el encargado te dé la autorización por WhatsApp.</p>
-            <hr class="my-4">
-            <p class="text-sm text-gray-500">⚠️ No podrás iniciar el viaje hasta recibir la confirmación.</p>
+            <p class="text-gray-700 mb-4">Esperando confirmación automática...</p>
+            <div class="animate-pulse text-gray-500 mt-4">Por favor no cierre la aplicación</div>
         </div>
 
-        <!-- ✅ SOLO APARECE CUANDO TÚ DAS LUZ VERDE -->
         <div id="autorizacionRecibida" class="hidden bg-green-50 border border-green-300 rounded-xl p-5 text-center mt-4">
-            <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE RECIBIDA</h3>
-            <p class="text-gray-700 mb-4">Estás autorizado para iniciar tu viaje.</p>
+            <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE - AUTORIZADO</h3>
+            <p class="text-gray-700 mb-4">Todo en regla. Puede iniciar su viaje.</p>
             <button onclick="irAMapa()" class="w-full bg-success hover:bg-success/90 text-white p-3 rounded-lg font-semibold">
                 <i class="fa fa-play mr-2"></i> Iniciar Viaje
             </button>
         </div>
 
-        <!-- ❌ SOLO APARECE CUANDO TÚ DAS LUZ ROJA -->
         <div id="autorizacionRechazada" class="hidden bg-red-50 border border-red-300 rounded-xl p-5 text-center mt-4">
             <h3 class="text-xl font-bold text-red-700 mb-3">❌ LUZ ROJA - NO AUTORIZADO</h3>
-            <p class="text-gray-700 mb-4">No se autoriza la salida. Corrige los puntos indicados e intenta nuevamente.</p>
+            <p class="text-gray-700 mb-4">Faltan requisitos. Revise y vuelva a enviar.</p>
             <button onclick="volverADatos()" class="w-full bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold">
                 Volver a revisar
             </button>
         </div>
     </div>
 
-    <!-- ====================================== -->
-    <!-- PANTALLA 3: MAPA + NAVEGACIÓN -->
-    <!-- ====================================== -->
     <div id="pantallaMapa" class="w-full min-h-screen bg-gray-100 p-3">
         <div class="bg-white rounded-xl shadow p-3 mb-3 flex justify-between items-center">
             <button onclick="volverADatos()" class="text-gray-700 text-lg">
@@ -221,7 +197,6 @@
             </div>
         </div>
 
-        <!-- ✅ BUSCADOR DE POZOS -->
         <div class="buscador-container">
             <input type="text" id="inputBuscador" placeholder="🔍 Buscar pozo, campamento o coordenadas...">
             <i class="fa fa-search icono-buscar"></i>
@@ -246,17 +221,13 @@
 
         <div id="mapa" class="mb-3"></div>
 
-        <!-- ✅ BOTÓN DE FINALIZAR -->
         <button onclick="finalizarViaje()" class="w-full bg-danger hover:bg-danger/90 text-white p-3 rounded-xl shadow-lg text-base font-semibold">
             <i class="fa fa-stop mr-2"></i> Finalizar Viaje
         </button>
     </div>
 
     <script>
-        // --------------------------
-        // DATOS GENERALES
-        // --------------------------
-        const TU_NUMERO = "593980530610"; // ✅ Tu número en formato internacional
+        const TU_NUMERO = "593980530610"; // Tu número en formato internacional
         let puntos = parseInt(localStorage.getItem("puntosDrive")) || 12;
         let viajeActivo = false;
         let watchGPS = null;
@@ -270,8 +241,8 @@
         let listaPozos = [];
         let tipoViaSeleccionada = "asfalto";
         let solicitudActual = {};
+        let verificacionInterval = null;
 
-        // ✅ LÍMITES DE VELOCIDAD
         const limites = {
             asfalto:    { liviano: 60, pesado: 50 },
             lastre:     { liviano: 50, pesado: 40 },
@@ -280,7 +251,6 @@
 
         const contadores = { giros:0, frenadas:0, aceleradas:0, peatones:0, velocidad:0, horas:0 };
 
-        // ✅ LISTA DE LUGARES
         listaPozos = [
             { nombre: "Yulebra 03", tipo: "Campamento", coords: [-0.5912, -76.9152] },
             { nombre: "Yulebra 02", tipo: "Pozo de agua", coords: [-0.5930, -76.9180] },
@@ -295,9 +265,6 @@
             { nombre: "Aguarico", tipo: "Zona", coords: [-0.5912, -76.9152] }
         ];
 
-        // --------------------------
-        // NAVEGACIÓN ENTRE PANTALLAS
-        // --------------------------
         function irADatos() {
             document.getElementById("pantallaLogo").style.display = "none";
             document.getElementById("pantallaDatos").classList.add("pantalla-activa");
@@ -307,9 +274,7 @@
             actualizarPuntos();
         }
 
-        // ✅ FUNCIÓN: ENVIAR SOLICITUD A TU WHATSAPP
-        function enviarSolicitud() {
-            // Validar campos obligatorios
+        function enviarSolicitudAutomatica() {
             const conductor = document.getElementById("conductor").value.trim();
             const placa = document.getElementById("placa").value.trim();
             const revVeh = document.getElementById("revVehiculo").value;
@@ -318,14 +283,12 @@
             const revDocumentos = document.getElementById("revDocumentos").value;
 
             if(!conductor || !placa || !revVeh || !revEquipo || !revDescanso || !revDocumentos) {
-                alert("⚠️ Completa todos los datos y preguntas antes de enviar");
+                alert("⚠️ Completa todos los datos y preguntas");
                 return;
             }
 
-            // Guardar datos
             solicitudActual = {
-                conductor,
-                placa,
+                conductor, placa,
                 tipoVeh: document.getElementById("tipoVehiculo").value,
                 inicio: document.getElementById("puntoInicio").value || "Sin origen",
                 destino: document.getElementById("puntoDestino").value || "Sin destino",
@@ -334,42 +297,38 @@
                 fecha: new Date().toLocaleString("es-EC")
             };
 
-            // ✅ MENSAJE QUE TE LLEGA A TI SOLAMENTE
-            const mensaje = `*📋 SOLICITUD DE SALIDA - AUTORIZACIÓN*%0A
+            const mensaje = `*📋 SOLICITUD DE SALIDA*%0A
 📅 Fecha: ${solicitudActual.fecha}%0A
 👤 Conductor: ${solicitudActual.conductor}%0A
 🚗 Placa: ${solicitudActual.placa} | Tipo: ${solicitudActual.tipoVeh}%0A
 📍 Ruta: ${solicitudActual.inicio} ➜ ${solicitudActual.destino}%0A
-%0A🔍 *REVISIÓN DE SEGURIDAD*%0A
-✅ Vehículo: ${revVeh}%0A
-✅ Equipo: ${revEquipo}%0A
-✅ Descanso: ${revDescanso}%0A
-✅ Documentos: ${revDocumentos}%0A
+%0A🔍 *REVISIÓN*%0A
+Vehículo: ${revVeh}%0A
+Equipo: ${revEquipo}%0A
+Descanso: ${revDescanso}%0A
+Documentos: ${revDocumentos}%0A
 %0A📝 Observaciones: ${solicitudActual.observaciones}%0A
 %0A---%0A
-*RESPONDE PARA AUTORIZAR:*%0A
-✅ Envía: *LUZVERDE* para permitir salir%0A
-❌ Envía: *LUZROJA* para rechazar`;
+*RESPUESTA:*`;
 
-            // Enviar a TU número
+            // ✅ Envía directo a tu número / grupo
             window.open(`https://wa.me/${TU_NUMERO}?text=${mensaje}`, "_blank");
 
-            // Cambiar a pantalla de espera
+            // ✅ Lógica automática: si todo es "ok", da luz verde solo
+            if(revVeh === "ok" && revEquipo === "ok" && revDescanso === "ok" && revDocumentos === "ok") {
+                setTimeout(() => {
+                    autorizarSalida(true);
+                }, 3000);
+            } else {
+                setTimeout(() => {
+                    autorizarSalida(false);
+                }, 3000);
+            }
+
             document.getElementById("pantallaDatos").classList.remove("pantalla-activa");
             document.getElementById("pantallaEspera").classList.add("pantalla-activa");
-
-            // Activar verificación de respuesta (simulación + instrucción)
-            verificarAutorizacion();
         }
 
-        // ✅ VERIFICACIÓN DE RESPUESTA
-        function verificarAutorizacion() {
-            alert("✅ Solicitud enviada. Cuando respondas por WhatsApp, el conductor debe actualizar la página o esperar a que aparezca la autorización.");
-            // Aquí puedes agregar un sistema de verificación, por ahora funciona así:
-            // Para probar: en la consola escribe: autorizarSalida(true) o autorizarSalida(false)
-        }
-
-        // ✅ FUNCIÓN PARA QUE TÚ DES LA AUTORIZACIÓN
         function autorizarSalida(apto) {
             if(apto) {
                 document.getElementById("autorizacionRecibida").classList.remove("hidden");
@@ -402,14 +361,10 @@
             document.getElementById("pantallaEspera").classList.remove("pantalla-activa");
             document.getElementById("pantallaMapa").classList.remove("pantalla-activa");
             document.getElementById("pantallaDatos").classList.add("pantalla-activa");
-            // Limpiar autorización anterior
             document.getElementById("autorizacionRecibida").classList.add("hidden");
             document.getElementById("autorizacionRechazada").classList.add("hidden");
         }
 
-        // --------------------------
-        // RESTO DE FUNCIONES (MAPA, GPS, ETC.)
-        // --------------------------
         function iniciarMapa() {
             mapa = L.map('mapa').setView([-0.46, -76.98], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -420,7 +375,6 @@
         function configurarBuscador() {
             const input = document.getElementById("inputBuscador");
             const lista = document.getElementById("listaResultados");
-
             input.addEventListener("input", () => {
                 const termino = input.value.trim().toLowerCase();
                 lista.innerHTML = "";
