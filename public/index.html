@@ -7,126 +7,169 @@
     <meta name="theme-color" content="#0F4C81">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-    <script>tailwind.config={theme:{extend:{colors:{primary:"#0F4C81",inicio:"#2A323C",danger:"#EB5757",success:"#27AE60"}}}};</script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0F4C81",
+                        inicio: "#2A323C",
+                        danger: "#EB5757",
+                        success: "#27AE60"
+                    }
+                }
+            }
+        };
+    </script>
     <style>
-      *{margin:0;padding:0;box-sizing:border-box;}
-      body{font-family:Arial,sans-serif;background:#f3f4f6;}
-      .pantalla{display:none;} .activa{display:block;}
-      .espera{padding:2rem;text-align:center;background:#fffbeb;border:2px solid #fbbf24;border-radius:1rem;margin:2rem 0;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f3f4f6; }
+        .pantalla { display: none; }
+        .activa { display: block !important; }
+        .espera { padding: 2rem; text-align: center; background: #fffbeb; border: 2px solid #fbbf24; border-radius: 1rem; margin: 2rem 0; }
     </style>
 </head>
 <body>
 
+<!-- PANTALLA DE INICIO -->
 <div id="pantallaLogo" class="activa w-full h-screen bg-inicio flex flex-col justify-center items-center text-center p-6">
     <h1 class="text-6xl font-bold text-green-400 mb-4">DRIVE</h1>
-    <p class="text-white text-xl mb-8">Seguridad Vial</p>
-    <button onclick="irADatos()" class="bg-green-500 px-10 py-3 rounded-xl text-white font-bold">Ingresar</button>
+    <p class="text-white text-xl mb-8">Sincronizando un manejo seguro</p>
+    <button onclick="irADatos()" class="bg-green-500 px-10 py-3 rounded-xl text-white font-bold text-lg">Ingresar</button>
 </div>
 
+<!-- PANTALLA DE DATOS -->
 <div id="pantallaDatos" class="pantalla max-w-md mx-auto p-4">
-    <header class="bg-primary text-white p-4 rounded-xl mb-4">
-        <h2 class="text-xl font-bold">📋 Datos del Viaje</h2>
+    <header class="bg-primary text-white p-4 rounded-xl mb-4 shadow">
+        <h2 class="text-xl font-bold"><i class="fa fa-truck mr-2"></i> Datos del Viaje</h2>
     </header>
+
     <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
         <input type="text" id="conductor" placeholder="Nombre completo" class="w-full p-3 border rounded" required>
-        <input type="text" id="placa" placeholder="Placa" class="w-full p-3 border rounded" required>
+        <input type="text" id="placa" placeholder="Placa del vehículo" class="w-full p-3 border rounded" required>
         <select id="tipoVeh" class="w-full p-3 border rounded">
-            <option value="liviano">Liviano</option>
-            <option value="pesado">Pesado</option>
+            <option value="liviano">Vehículo Liviano</option>
+            <option value="pesado">Vehículo Pesado</option>
         </select>
-        <input type="text" id="inicio" placeholder="Origen" class="w-full p-3 border rounded" required>
-        <input type="text" id="destino" placeholder="Destino" class="w-full p-3 border rounded" required>
+        <input type="text" id="inicio" placeholder="Lugar de salida" class="w-full p-3 border rounded" required>
+        <input type="text" id="destino" placeholder="Lugar de destino" class="w-full p-3 border rounded" required>
     </div>
+
     <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
-        <h3 class="font-semibold mb-2">🔍 Revisión</h3>
-        <select id="revVeh" class="w-full p-2 border rounded"><option value="">¿Vehículo ok?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revEquipo" class="w-full p-2 border rounded"><option value="">¿Equipo ok?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revDescanso" class="w-full p-2 border rounded"><option value="">¿Descansado?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revDoc" class="w-full p-2 border rounded"><option value="">¿Documentos ok?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <textarea id="observaciones" rows="2" placeholder="Observaciones" class="w-full p-2 border rounded"></textarea>
+        <h3 class="font-semibold mb-2">🔍 Revisión de Seguridad</h3>
+        <select id="revVeh" class="w-full p-2 border rounded"><option value="">¿Vehículo en buen estado?</option><option value="ok">Sí</option><option value="no">No</option></select>
+        <select id="revEquipo" class="w-full p-2 border rounded"><option value="">¿Equipo de seguridad completo?</option><option value="ok">Sí</option><option value="no">No</option></select>
+        <select id="revDescanso" class="w-full p-2 border rounded"><option value="">¿Descansado y sobrio?</option><option value="ok">Sí</option><option value="no">No</option></select>
+        <select id="revDoc" class="w-full p-2 border rounded"><option value="">¿Documentos al día?</option><option value="ok">Sí</option><option value="no">No</option></select>
+        <textarea id="observaciones" rows="2" placeholder="Observaciones adicionales" class="w-full p-2 border rounded"></textarea>
     </div>
-    <button onclick="enviar()" class="w-full bg-primary text-white p-4 rounded-xl font-bold">📤 Enviar para autorización</button>
+
+    <button onclick="enviarSolicitud()" class="w-full bg-primary text-white p-4 rounded-xl font-bold text-lg">
+        📤 Enviar para autorización
+    </button>
 </div>
 
+<!-- PANTALLA DE ESPERA Y RESULTADO -->
 <div id="pantallaEspera" class="pantalla max-w-md mx-auto p-4">
     <div class="espera">
-        <h2 class="text-2xl font-bold text-amber-700">⏳ ESPERANDO</h2>
-        <p class="mt-3">Tu solicitud está en revisión...</p>
+        <h2 class="text-2xl font-bold text-amber-700">⏳ SOLICITUD ENVIADA</h2>
+        <p class="mt-3">Esperando autorización...</p>
         <p class="text-sm text-gray-600 mt-2">No cierres la aplicación</p>
     </div>
+
     <div id="aprobado" class="hidden bg-green-50 border border-green-300 p-5 rounded-xl text-center mt-4">
         <h3 class="text-xl font-bold text-green-700">✅ LUZ VERDE</h3>
-        <p class="my-3">Autorizado para iniciar viaje</p>
-        <button onclick="alert('Viaje iniciado')" class="w-full bg-success text-white p-3 rounded-lg">🚀 Iniciar Viaje</button>
+        <p class="my-3">Viaje autorizado, puede iniciar</p>
+        <button onclick="volverInicio()" class="w-full bg-success text-white p-3 rounded-lg font-bold">Volver al inicio</button>
     </div>
+
     <div id="rechazado" class="hidden bg-red-50 border border-red-300 p-5 rounded-xl text-center mt-4">
         <h3 class="text-xl font-bold text-red-700">❌ LUZ ROJA</h3>
-        <p class="my-3">No autorizado, revisa datos</p>
-        <button onclick="volver()" class="w-full bg-gray-500 text-white p-3 rounded-lg">Volver</button>
+        <p class="my-3">No autorizado, revise los datos</p>
+        <button onclick="volverInicio()" class="w-full bg-gray-500 text-white p-3 rounded-lg font-bold">Volver a revisar</button>
     </div>
 </div>
 
 <script>
-const URL = "https://drive-seguridad.onrender.com";
-let codigo = null;
-let intervalo = null;
+const URL_SERVIDOR = "https://drive-seguridad.onrender.com";
+let codigoActual = null;
+let intervaloVerificacion = null;
 
+// Cambiar de pantalla Inicio a Datos
 function irADatos() {
-  document.getElementById("pantallaLogo").classList.remove("activa");
-  document.getElementById("pantallaDatos").classList.add("activa");
+    document.getElementById("pantallaLogo").classList.remove("activa");
+    document.getElementById("pantallaDatos").classList.add("activa");
 }
 
-async function enviar() {
-  const datos = {
-    conductor: document.getElementById("conductor").value.trim(),
-    placa: document.getElementById("placa").value.trim(),
-    tipoVeh: document.getElementById("tipoVeh").value,
-    inicio: document.getElementById("inicio").value.trim(),
-    destino: document.getElementById("destino").value.trim(),
-    revVeh: document.getElementById("revVeh").value,
-    revEquipo: document.getElementById("revEquipo").value,
-    revDescanso: document.getElementById("revDescanso").value,
-    revDoc: document.getElementById("revDoc").value,
-    observaciones: document.getElementById("observaciones").value.trim()
-  };
-  if (!datos.conductor || !datos.placa || !datos.inicio || !datos.destino || !datos.revVeh || !datos.revEquipo || !datos.revDescanso || !datos.revDoc) return alert("⚠️ Completa todo");
+// Enviar solicitud al servidor
+async function enviarSolicitud() {
+    const datos = {
+        conductor: document.getElementById("conductor").value.trim(),
+        placa: document.getElementById("placa").value.trim(),
+        tipoVeh: document.getElementById("tipoVeh").value,
+        inicio: document.getElementById("inicio").value.trim(),
+        destino: document.getElementById("destino").value.trim(),
+        revVeh: document.getElementById("revVeh").value,
+        revEquipo: document.getElementById("revEquipo").value,
+        revDescanso: document.getElementById("revDescanso").value,
+        revDoc: document.getElementById("revDoc").value,
+        observaciones: document.getElementById("observaciones").value.trim()
+    };
 
-  try {
-    const res = await fetch(`${URL}/enviar-solicitud`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
-    const r = await res.json();
-    if (r.exito) {
-      codigo = r.codigo;
-      window.open(r.enlaceWhatsApp, "_blank");
-      document.getElementById("pantallaDatos").classList.remove("activa");
-      document.getElementById("pantallaEspera").classList.add("activa");
-      intervalo = setInterval(verificar, 2000); // Revisa cada 2 segundos
+    if (!datos.conductor || !datos.placa || !datos.inicio || !datos.destino || !datos.revVeh || !datos.revEquipo || !datos.revDescanso || !datos.revDoc) {
+        alert("⚠️ Completa todos los campos obligatorios");
+        return;
     }
-  } catch (e) { alert("❌ Sin conexión"); }
-}
 
-async function verificar() {
-  if (!codigo) return;
-  try {
-    const res = await fetch(`${URL}/estado/${codigo}`);
-    const d = await res.json();
-    if (d.estado === "aprobado") {
-      clearInterval(intervalo);
-      document.getElementById("aprobado").classList.remove("hidden");
-    } else if (d.estado === "rechazado") {
-      clearInterval(intervalo);
-      document.getElementById("rechazado").classList.remove("hidden");
+    try {
+        const respuesta = await fetch(`${URL_SERVIDOR}/enviar-solicitud`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        const resultado = await respuesta.json();
+
+        if (resultado.exito) {
+            codigoActual = resultado.codigo;
+            window.open(resultado.enlaceWhatsApp, "_blank");
+            document.getElementById("pantallaDatos").classList.remove("activa");
+            document.getElementById("pantallaEspera").classList.add("activa");
+            intervaloVerificacion = setInterval(verificarEstado, 2000);
+        } else {
+            alert("❌ No se pudo enviar la solicitud");
+        }
+    } catch (error) {
+        alert("❌ Sin conexión con el servidor");
     }
-  } catch (e) {}
 }
 
-function volver() {
-  clearInterval(intervalo);
-  codigo = null;
-  document.getElementById("pantallaEspera").classList.remove("activa");
-  document.getElementById("pantallaDatos").classList.add("activa");
-  document.getElementById("aprobado").classList.add("hidden");
-  document.getElementById("rechazado").classList.add("hidden");
+// Revisar cada 2 segundos si ya autorizaste
+async function verificarEstado() {
+    if (!codigoActual) return;
+    try {
+        const respuesta = await fetch(`${URL_SERVIDOR}/estado/${codigoActual}`);
+        const datos = await respuesta.json();
+        if (datos.estado === "aprobado") {
+            clearInterval(intervaloVerificacion);
+            document.getElementById("aprobado").classList.remove("hidden");
+        } else if (datos.estado === "rechazado") {
+            clearInterval(intervaloVerificacion);
+            document.getElementById("rechazado").classList.remove("hidden");
+        }
+    } catch (error) { /* Ignorar errores temporales */ }
+}
+
+// Volver al inicio
+function volverInicio() {
+    clearInterval(intervaloVerificacion);
+    codigoActual = null;
+    document.getElementById("pantallaEspera").classList.remove("activa");
+    document.getElementById("pantallaDatos").classList.remove("activa");
+    document.getElementById("aprobado").classList.add("hidden");
+    document.getElementById("rechazado").classList.add("hidden");
+    document.getElementById("pantallaLogo").classList.add("activa");
 }
 </script>
+
 </body>
 </html>
