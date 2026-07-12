@@ -4,172 +4,602 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DRIVE - Seguridad Vial</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0F4C81">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: "#0F4C81",
-                        inicio: "#2A323C",
-                        danger: "#EB5757",
-                        success: "#27AE60"
-                    }
+                        primary: '#0F4C81',
+                        inicio: '#2A323C',
+                        danger: '#EB5757',
+                        success: '#27AE60',
+                        warning: '#F2C94C'
+                    },
+                    fontFamily: { sans: ['Arial', 'sans-serif'] }
                 }
             }
-        };
+        }
     </script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f3f4f6; }
-        .pantalla { display: none; }
-        .activa { display: block !important; }
-        .espera { padding: 2rem; text-align: center; background: #fffbeb; border: 2px solid #fbbf24; border-radius: 1rem; margin: 2rem 0; }
+        body { touch-action: manipulation; font-family: Arial, sans-serif; background: #f3f4f6; }
+        .vel-grande { font-size: 2.5rem; font-weight: bold; line-height: 1; }
+        .estado-parpadeo { animation: parpadeo 2s infinite; }
+        @keyframes parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        #pantallaLogo { display: flex; }
+        #pantallaDatos, #pantallaMapa, #pantallaEspera { display: none; }
+        .pantalla-activa { display: block !important; }
+        #mapa { height: 45vh; border-radius: 12px; z-index: 1; width: 100%; }
+        .info-navegacion { background: #ffffff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .buscador-container { position: relative; margin-bottom: 10px; }
+        #inputBuscador { width: 100%; padding: 10px 35px 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+        .icono-buscar { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #666; }
+        #listaResultados { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 0 0 8px 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); z-index: 1000; max-height: 220px; overflow-y: auto; display: none; }
+        .item-resultado { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; }
+        .item-resultado:hover { background: #f8fafc; }
+        .pregunta-seguridad { padding: 10px; margin-bottom: 8px; border-radius: 6px; background: #f9fafb; border-left: 3px solid #0F4C81; }
+        .pregunta-seguridad label { font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px; }
+        .pregunta-seguridad select, .pregunta-seguridad textarea { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        .pantalla-espera { padding: 2rem; text-align: center; margin: 2rem 0; border-radius: 1rem; background: #fffbeb; border: 2px solid #fbbf24; }
+        #toastInfraccion { transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(-100px); }
+        #toastInfraccion.show { transform: translateY(0); }
     </style>
 </head>
 <body>
 
-<!-- PANTALLA DE INICIO -->
-<div id="pantallaLogo" class="activa w-full h-screen bg-inicio flex flex-col justify-center items-center text-center p-6">
-    <h1 class="text-6xl font-bold text-green-400 mb-4">DRIVE</h1>
-    <p class="text-white text-xl mb-8">Sincronizando un manejo seguro</p>
-    <button onclick="irADatos()" class="bg-green-500 px-10 py-3 rounded-xl text-white font-bold text-lg">Ingresar</button>
-</div>
-
-<!-- PANTALLA DE DATOS -->
-<div id="pantallaDatos" class="pantalla max-w-md mx-auto p-4">
-    <header class="bg-primary text-white p-4 rounded-xl mb-4 shadow">
-        <h2 class="text-xl font-bold"><i class="fa fa-truck mr-2"></i> Datos del Viaje</h2>
-    </header>
-
-    <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
-        <input type="text" id="conductor" placeholder="Nombre completo" class="w-full p-3 border rounded" required>
-        <input type="text" id="placa" placeholder="Placa del vehículo" class="w-full p-3 border rounded" required>
-        <select id="tipoVeh" class="w-full p-3 border rounded">
-            <option value="liviano">Vehículo Liviano</option>
-            <option value="pesado">Vehículo Pesado</option>
-        </select>
-        <input type="text" id="inicio" placeholder="Lugar de salida" class="w-full p-3 border rounded" required>
-        <input type="text" id="destino" placeholder="Lugar de destino" class="w-full p-3 border rounded" required>
+    <div id="toastInfraccion" class="fixed top-4 left-4 right-4 z-[5000] hidden bg-red-600 text-white p-4 rounded-xl shadow-2xl flex items-center space-x-3">
+        <i class="fa fa-exclamation-triangle text-2xl"></i>
+        <div>
+            <h4 class="font-bold">INFRACCIÓN DETECTADA</h4>
+            <p id="toastTexto" class="text-sm"></p>
+        </div>
     </div>
 
-    <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
-        <h3 class="font-semibold mb-2">🔍 Revisión de Seguridad</h3>
-        <select id="revVeh" class="w-full p-2 border rounded"><option value="">¿Vehículo en buen estado?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revEquipo" class="w-full p-2 border rounded"><option value="">¿Equipo de seguridad completo?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revDescanso" class="w-full p-2 border rounded"><option value="">¿Descansado y sobrio?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <select id="revDoc" class="w-full p-2 border rounded"><option value="">¿Documentos al día?</option><option value="ok">Sí</option><option value="no">No</option></select>
-        <textarea id="observaciones" rows="2" placeholder="Observaciones adicionales" class="w-full p-2 border rounded"></textarea>
+    <div id="pantallaLogo" class="w-full h-screen bg-inicio flex flex-col justify-center items-center text-center p-6">
+        <h1 class="text-7xl font-bold text-green-400 mb-6">DRIVE</h1>
+        <p class="text-white text-xl mb-12">Sincronizando un manejo seguro</p>
+        <button onclick="irADatos()" class="bg-green-500 hover:bg-green-600 text-white text-xl font-semibold px-12 py-4 rounded-xl shadow-lg transition-all">
+            Ingresar
+        </button>
     </div>
 
-    <button onclick="enviarSolicitud()" class="w-full bg-primary text-white p-4 rounded-xl font-bold text-lg">
-        📤 Enviar para autorización
-    </button>
-</div>
+    <div id="pantallaDatos" class="max-w-md mx-auto p-4">
+        <header class="bg-primary text-white p-4 rounded-xl shadow-lg mb-5">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold"><i class="fa fa-truck mr-2"></i> DRIVE</h1>
+                    <p class="text-sm opacity-90">Seguridad Vial - Orellana</p>
+                </div>
+                <div class="text-right">
+                    <div class="bg-white text-primary px-3 py-1 rounded-lg font-bold text-lg">
+                        <span id="puntos">12</span>/12
+                    </div>
+                    <div class="text-sm mt-1" id="horaActual">--:--:--</div>
+                </div>
+            </div>
+        </header>
 
-<!-- PANTALLA DE ESPERA Y RESULTADO -->
-<div id="pantallaEspera" class="pantalla max-w-md mx-auto p-4">
-    <div class="espera">
-        <h2 class="text-2xl font-bold text-amber-700">⏳ SOLICITUD ENVIADA</h2>
-        <p class="mt-3">Esperando autorización...</p>
-        <p class="text-sm text-gray-600 mt-2">No cierres la aplicación</p>
+        <div id="bloqueo" class="hidden bg-red-100 border border-red-400 text-red-700 rounded-xl p-4 text-center mb-4">
+            <h3 class="text-lg font-bold">🚫 BLOQUEO ACTIVO</h3>
+            <p class="text-sm mt-1">Tienes 0 puntos. Comunícate con tu supervisor para restablecer tu cuenta.</p>
+        </div>
+
+        <div id="formularioViaje">
+            <div class="bg-white rounded-xl shadow p-5 mb-5">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Datos del Viaje</h3>
+                <div class="space-y-3">
+                    <input type="text" id="conductor" placeholder="Nombre del conductor" class="w-full p-3 border rounded-lg">
+                    <input type="text" id="placa" placeholder="Placa del vehículo" class="w-full p-3 border rounded-lg">
+                    <select id="tipoVehiculo" class="w-full p-3 border rounded-lg">
+                        <option value="liviano">Vehículo Liviano</option>
+                        <option value="pesado">Vehículo Pesado</option>
+                    </select>
+                    <input type="text" id="puntoInicio" placeholder="Origen / Base" class="w-full p-3 border rounded-lg">
+                    <input type="text" id="puntoDestino" placeholder="Destino / Pozo / Coordenadas" class="w-full p-3 border rounded-lg">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4 mb-5">
+                <h4 class="text-base font-semibold text-gray-700 mb-3">📋 Revisión de Seguridad</h4>
+
+                <div class="pregunta-seguridad">
+                    <label>¿Revisó aceite, agua, frenos y llantas?</label>
+                    <select id="revVehiculo" required>
+                        <option value="">Seleccione</option>
+                        <option value="ok">Sí, todo en orden</option>
+                        <option value="no">No, tiene fallas</option>
+                    </select>
+                </div>
+
+                <div class="pregunta-seguridad">
+                    <label>¿Cuenta con extintor, botiquín, triángulos y chaleco?</label>
+                    <select id="revEquipo" required>
+                        <option value="">Seleccione</option>
+                        <option value="ok">Sí, completo</option>
+                        <option value="no">No cuenta con equipo</option>
+                    </select>
+                </div>
+
+                <div class="pregunta-seguridad">
+                    <label>¿Descansó mínimo 7 horas y no ha bebido alcohol?</label>
+                    <select id="revDescanso" required>
+                        <option value="">Seleccione</option>
+                        <option value="ok">Sí, descansado y sin alcohol</option>
+                        <option value="no">No, cansado o consumió alcohol</option>
+                    </select>
+                </div>
+
+                <div class="pregunta-seguridad">
+                    <label>¿Documentos al día y ruta revisada?</label>
+                    <select id="revDocumentos" required>
+                        <option value="">Seleccione</option>
+                        <option value="ok">Sí, todo en regla</option>
+                        <option value="no">Faltan documentos</option>
+                    </select>
+                </div>
+
+                <div class="pregunta-seguridad">
+                    <label>Observaciones adicionales:</label>
+                    <textarea id="observaciones" rows="2" placeholder="Escriba detalles si hay algo que reportar..."></textarea>
+                </div>
+            </div>
+
+            <button onclick="enviarSolicitudAutomatica()" class="w-full bg-primary hover:bg-primary/90 text-white p-4 rounded-xl shadow-lg text-lg font-semibold mb-3">
+                <i class="fa fa-paper-plane mr-2"></i> Enviar solicitud a WhatsApp
+            </button>
+        </div>
     </div>
 
-    <div id="aprobado" class="hidden bg-green-50 border border-green-300 p-5 rounded-xl text-center mt-4">
-        <h3 class="text-xl font-bold text-green-700">✅ LUZ VERDE</h3>
-        <p class="my-3">Viaje autorizado, puede iniciar</p>
-        <button onclick="volverInicio()" class="w-full bg-success text-white p-3 rounded-lg font-bold">Volver al inicio</button>
+    <div id="pantallaEspera" class="max-w-md mx-auto p-4">
+        <header class="bg-primary text-white p-4 rounded-xl shadow-lg mb-5">
+            <button onclick="volverADatos()" class="text-white text-lg">
+                <i class="fa fa-arrow-left mr-2"></i> Volver
+            </button>
+        </header>
+
+        <div class="pantalla-espera">
+            <h2 class="text-2xl font-bold text-amber-700 mb-4">⏳ SOLICITUD EVALUADA</h2>
+            <p class="text-gray-700 mb-4">Procesando checklist de seguridad...</p>
+            <div class="animate-pulse text-gray-500 mt-4">Analizando respuestas del conductor...</div>
+        </div>
+
+        <div id="autorizacionRecibida" class="hidden bg-green-50 border border-green-300 rounded-xl p-5 text-center mt-4">
+            <h3 class="text-xl font-bold text-green-700 mb-3">✅ LUZ VERDE - AUTORIZADO</h3>
+            <p class="text-gray-700 mb-4">Inspección aprobada de forma automatizada. Buen viaje.</p>
+            <button onclick="irAMapa()" class="w-full bg-success hover:bg-success/90 text-white p-3 rounded-lg font-semibold shadow">
+                <i class="fa fa-play mr-2"></i> Iniciar Monitoreo de Viaje
+            </button>
+        </div>
+
+        <div id="autorizacionRechazada" class="hidden bg-red-50 border border-red-300 rounded-xl p-5 text-center mt-4">
+            <h3 class="text-xl font-bold text-red-700 mb-3">❌ LUZ ROJA - RECHAZADO</h3>
+            <p class="text-gray-700 mb-4">No cumple con las normativas de seguridad vial indicadas en el checklist.</p>
+            <button onclick="volverADatos()" class="w-full bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold">
+                Corregir Checklist
+            </button>
+        </div>
     </div>
 
-    <div id="rechazado" class="hidden bg-red-50 border border-red-300 p-5 rounded-xl text-center mt-4">
-        <h3 class="text-xl font-bold text-red-700">❌ LUZ ROJA</h3>
-        <p class="my-3">No autorizado, revise los datos</p>
-        <button onclick="volverInicio()" class="w-full bg-gray-500 text-white p-3 rounded-lg font-bold">Volver a revisar</button>
+    <div id="pantallaMapa" class="w-full min-h-screen bg-gray-100 p-3">
+        <div class="bg-white rounded-xl shadow p-3 mb-3 flex justify-between items-center">
+            <button onclick="volverADatos()" class="text-gray-700 text-lg p-2">
+                <i class="fa fa-arrow-left"></i>
+            </button>
+            <div class="text-center">
+                <h2 class="font-semibold text-sm">NAVEGACIÓN DE VIAJE</h2>
+                <p class="text-xs text-primary font-bold">🎯 Destino: <span id="destinoActual">Sin destino</span></p>
+            </div>
+            <div class="bg-primary text-white px-3 py-1 rounded-lg font-bold text-sm">
+                <span id="puntosMapa">12</span> Pts
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            <div class="buscador-container col-span-2">
+                <input type="text" id="inputBuscador" placeholder="🔍 Buscar pozo, campamento o base...">
+                <div id="listaResultados"></div>
+            </div>
+            
+            <div class="bg-white p-2 rounded-lg shadow flex items-center space-x-2 col-span-2">
+                <span class="text-xs text-gray-500 font-bold whitespace-nowrap"><i class="fa fa-road"></i> Tipo Vía:</span>
+                <select id="tipoViaSelector" onchange="cambiarTipoVia(this.value)" class="w-full text-xs p-1 bg-gray-50 border rounded font-semibold text-gray-700">
+                    <option value="asfalto">Asfalto (60 / 50 km/h)</option>
+                    <option value="lastre">Lastre / Piedra (50 / 40 km/h)</option>
+                    <option value="sinlastre">Sin Lastre / Crítica (40 / 30 km/h)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+            <div class="info-navegacion">
+                <p class="text-xs text-gray-500">Velocidad</p>
+                <p class="vel-grande text-primary" id="velMapa">0</p>
+                <p class="text-xs font-bold text-gray-400">km/h</p>
+            </div>
+            <div class="info-navegacion">
+                <p class="text-xs text-gray-500">Condición</p>
+                <p class="font-bold text-sm text-gray-800" id="viaMapa">Asfalto</p>
+                <p class="text-xs text-danger font-bold">Lím: <span id="limiteMapa">60 km/h</span></p>
+            </div>
+            <div id="estadoVelocidad" class="info-navegacion flex flex-col justify-center items-center">
+                <p class="font-bold text-green-600 text-sm">ESTADO</p>
+                <p class="text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full mt-1">NORMAL</p>
+            </div>
+        </div>
+
+        <div id="mapa" class="mb-3 border-2 border-white shadow-inner"></div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs">
+            <span class="font-bold text-amber-800"><i class="fa fa-flask"></i> Consola de pruebas GPS (Simulador):</span>
+            <div class="flex space-x-2 mt-2">
+                <button onclick="simularGPS(-0.463, -76.982, 35)" class="bg-amber-500 text-white px-2 py-1 rounded">Manejo Normal (35km/h)</button>
+                <button onclick="simularGPS(-0.465, -76.985, 75)" class="bg-red-500 text-white px-2 py-1 rounded">Exceso Vel (75km/h)</button>
+                <button onclick="simularGPS(-0.468, -76.989, 10)" class="bg-blue-500 text-white px-2 py-1 rounded">Frenazo Brusco</button>
+            </div>
+        </div>
+
+        <button onclick="finalizarViaje()" class="w-full bg-danger hover:bg-danger/90 text-white p-3 rounded-xl shadow-lg text-base font-semibold transition-all">
+            <i class="fa fa-stop mr-2"></i> Finalizar Viaje
+        </button>
     </div>
-</div>
 
-<script>
-const URL_SERVIDOR = "https://drive-seguridad.onrender.com";
-let codigoActual = null;
-let intervaloVerificacion = null;
+    <script>
+        const TU_NUMERO = "593980530610"; 
+        let puntos = parseInt(localStorage.getItem("puntosDrive"));
+        if (isNaN(puntos)) puntos = 12;
 
-// Cambiar de pantalla Inicio a Datos
-function irADatos() {
-    document.getElementById("pantallaLogo").classList.remove("activa");
-    document.getElementById("pantallaDatos").classList.add("activa");
-}
+        let viajeActivo = false;
+        let watchGPS = null;
+        let mapa = null;
+        let marcadorVehiculo = null;
+        let marcadorDestino = null;
+        let controlRuta = null;
+        
+        let ultimaVel = 0;
+        let ultimoRumbo = 0;
+        let tipoViaSeleccionada = "asfalto";
+        let solicitudActual = {};
 
-// Enviar solicitud al servidor
-async function enviarSolicitud() {
-    const datos = {
-        conductor: document.getElementById("conductor").value.trim(),
-        placa: document.getElementById("placa").value.trim(),
-        tipoVeh: document.getElementById("tipoVeh").value,
-        inicio: document.getElementById("inicio").value.trim(),
-        destino: document.getElementById("destino").value.trim(),
-        revVeh: document.getElementById("revVeh").value,
-        revEquipo: document.getElementById("revEquipo").value,
-        revDescanso: document.getElementById("revDescanso").value,
-        revDoc: document.getElementById("revDoc").value,
-        observaciones: document.getElementById("observaciones").value.trim()
-    };
+        const limites = {
+            asfalto:    { liviano: 60, pesado: 50 },
+            lastre:     { liviano: 50, pesado: 40 },
+            sinlastre:  { liviano: 40, pesado: 30 }
+        };
 
-    if (!datos.conductor || !datos.placa || !datos.inicio || !datos.destino || !datos.revVeh || !datos.revEquipo || !datos.revDescanso || !datos.revDoc) {
-        alert("⚠️ Completa todos los campos obligatorios");
-        return;
-    }
+        const listaPozos = [
+            { nombre: "Yulebra 03", tipo: "Campamento", coords: [-0.5912, -76.9152] },
+            { nombre: "Yulebra 02", tipo: "Pozo de agua", coords: [-0.5930, -76.9180] },
+            { nombre: "Yulebra 05", tipo: "Campamento", coords: [-0.5950, -76.9210] },
+            { nombre: "Yulebra 40", tipo: "Pozo petrolero", coords: [-0.6010, -76.9300] },
+            { nombre: "Yulebra 07", tipo: "Pozo petrolero", coords: [-0.5980, -76.9250] },
+            { nombre: "Yulebra RW1", tipo: "Pozo petrolero", coords: [-0.5965, -76.9230] },
+            { nombre: "SSFD 76", tipo: "Campamento", coords: [-0.6200, -76.9500] },
+            { nombre: "Cascada", tipo: "Punto de referencia", coords: [-0.5700, -76.9000] },
+            { nombre: "Coca Base", tipo: "Base / Ciudad", coords: [-0.4600, -76.9800] },
+            { nombre: "Dayuma", tipo: "Sector", coords: [-0.5200, -76.9500] },
+            { nombre: "Aguarico", tipo: "Zona", coords: [-0.5912, -76.9152] }
+        ];
 
-    try {
-        const respuesta = await fetch(`${URL_SERVIDOR}/enviar-solicitud`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        const resultado = await respuesta.json();
-
-        if (resultado.exito) {
-            codigoActual = resultado.codigo;
-            window.open(resultado.enlaceWhatsApp, "_blank");
-            document.getElementById("pantallaDatos").classList.remove("activa");
-            document.getElementById("pantallaEspera").classList.add("activa");
-            intervaloVerificacion = setInterval(verificarEstado, 2000);
-        } else {
-            alert("❌ No se pudo enviar la solicitud");
+        function irADatos() {
+            document.getElementById("pantallaLogo").style.display = "none";
+            document.getElementById("pantallaDatos").classList.add("pantalla-activa");
+            verificarBloqueo();
+            
+            setInterval(() => {
+                const el = document.getElementById("horaActual");
+                if(el) el.textContent = new Date().toLocaleTimeString("es-EC");
+            }, 1000);
         }
-    } catch (error) {
-        alert("❌ Sin conexión con el servidor");
-    }
-}
 
-// Revisar cada 2 segundos si ya autorizaste
-async function verificarEstado() {
-    if (!codigoActual) return;
-    try {
-        const respuesta = await fetch(`${URL_SERVIDOR}/estado/${codigoActual}`);
-        const datos = await respuesta.json();
-        if (datos.estado === "aprobado") {
-            clearInterval(intervaloVerificacion);
-            document.getElementById("aprobado").classList.remove("hidden");
-        } else if (datos.estado === "rechazado") {
-            clearInterval(intervaloVerificacion);
-            document.getElementById("rechazado").classList.remove("hidden");
+        function verificarBloqueo() {
+            document.getElementById("puntos").textContent = puntos;
+            if(puntos <= 0) {
+                document.getElementById("bloqueo").classList.remove("hidden");
+                document.getElementById("formularioViaje").classList.add("hidden");
+            } else {
+                document.getElementById("bloqueo").classList.add("hidden");
+                document.getElementById("formularioViaje").classList.remove("hidden");
+            }
         }
-    } catch (error) { /* Ignorar errores temporales */ }
-}
 
-// Volver al inicio
-function volverInicio() {
-    clearInterval(intervaloVerificacion);
-    codigoActual = null;
-    document.getElementById("pantallaEspera").classList.remove("activa");
-    document.getElementById("pantallaDatos").classList.remove("activa");
-    document.getElementById("aprobado").classList.add("hidden");
-    document.getElementById("rechazado").classList.add("hidden");
-    document.getElementById("pantallaLogo").classList.add("activa");
-}
-</script>
+        function enviarSolicitudAutomatica() {
+            const conductor = document.getElementById("conductor").value.trim();
+            const placa = document.getElementById("placa").value.trim();
+            const revVeh = document.getElementById("revVehiculo").value;
+            const revEquipo = document.getElementById("revEquipo").value;
+            const revDescanso = document.getElementById("revDescanso").value;
+            const revDocumentos = document.getElementById("revDocumentos").value;
 
+            if(!conductor || !placa || !revVeh || !revEquipo || !revDescanso || !revDocumentos) {
+                alert("⚠️ Completa todos los datos requeridos y firmas del checklist.");
+                return;
+            }
+
+            solicitudActual = {
+                conductor, placa,
+                tipoVeh: document.getElementById("tipoVehiculo").value,
+                inicio: document.getElementById("puntoInicio").value || "Coca Base",
+                destino: document.getElementById("puntoDestino").value || "Campo Orellana",
+                revVeh, revEquipo, revDescanso, revDocumentos,
+                observaciones: document.getElementById("observaciones").value || "Ninguna",
+                fecha: new Date().toLocaleString("es-EC")
+            };
+
+            const mensaje = `*📋 SOLICITUD DE SALIDA - DRIVE*%0A📅 *Fecha:* ${solicitudActual.fecha}%0A👤 *Conductor:* ${solicitudActual.conductor}%0A🚗 *Vehículo:* ${solicitudActual.placa} (${solicitudActual.tipoVeh.toUpperCase()})%0A📍 *Ruta:* ${solicitudActual.inicio} ➜ ${solicitudActual.destino}%0A%0A*CHECKLIST SEGURIDAD:*%0AMecánica: ${revVeh === 'ok' ? '✅ OK' : '❌ FALLA'}%0AEquipo de Emerg.: ${revEquipo === 'ok' ? '✅ OK' : '❌ INCOMPLETO'}%0ADescanso/Sobr.: ${revDescanso === 'ok' ? '✅ OK' : '❌ FATIGA/RIESGO'}%0ADocumentos: ${revDocumentos === 'ok' ? '✅ OK' : '❌ NO REGLA'}%0A%0A📝 *Obs:* ${solicitudActual.observaciones}`;
+
+            window.open(`https://wa.me/${TU_NUMERO}?text=${mensaje}`, "_blank");
+
+            document.getElementById("pantallaDatos").classList.remove("pantalla-activa");
+            document.getElementById("pantallaEspera").classList.add("pantalla-activa");
+
+            const todoAprobado = (revVeh === "ok" && revEquipo === "ok" && revDescanso === "ok" && revDocumentos === "ok");
+            setTimeout(() => {
+                if(todoAprobado) {
+                    document.getElementById("autorizacionRecibida").classList.remove("hidden");
+                } else {
+                    document.getElementById("autorizacionRechazada").classList.remove("hidden");
+                }
+            }, 2000);
+        }
+
+        function irAMapa() {
+            document.getElementById("pantallaEspera").classList.remove("pantalla-activa");
+            document.getElementById("pantallaMapa").classList.add("pantalla-activa");
+            document.getElementById("destinoActual").textContent = solicitudActual.destino;
+            document.getElementById("puntosMapa").textContent = puntos;
+
+            cambiarTipoVia(tipoViaSeleccionada);
+            
+            // Inicialización segura del mapa diferida para evitar fallas de CSS
+            setTimeout(() => {
+                if (!mapa) {
+                    iniciarMapa();
+                } else {
+                    mapa.invalidateSize();
+                }
+                iniciarMonitoreoGPS();
+            }, 3000);
+
+            configurarBuscador();
+        }
+
+        function cambiarTipoVia(tipo) {
+            tipoViaSeleccionada = tipo;
+            const veh = solicitudActual.tipoVeh || "liviano";
+            const lim = limites[tipoViaSeleccionada][veh];
+            
+            const nombres = { asfalto: "Asfalto / Vía Auca", lastre: "Lastre / Piedra", sinlastre: "Zona Crítica" };
+            document.getElementById("viaMapa").textContent = nombres[tipo];
+            document.getElementById("limiteMapa").textContent = `${lim} km/h`;
+        }
+
+        function iniciarMapa() {
+            mapa = L.map('mapa', { zoomControl: false }).setView([-0.4616, -76.9864], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© DRIVE Security'
+            }).addTo(mapa);
+            L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+        }
+
+        function configurarBuscador() {
+            const input = document.getElementById("inputBuscador");
+            const lista = document.getElementById("listaResultados");
+            
+            input.addEventListener("input", () => {
+                const termino = input.value.trim().toLowerCase();
+                lista.innerHTML = "";
+                if(termino.length < 1) { lista.style.display = "none"; return; }
+                
+                const filtrados = listaPozos.filter(p => p.nombre.toLowerCase().includes(termino));
+                if(filtrados.length === 0) {
+                    lista.innerHTML = `<div class="item-resultado text-gray-400 text-sm">No encontrado</div>`;
+                } else {
+                    filtrados.forEach(p => {
+                        const div = document.createElement("div");
+                        div.className = "item-resultado text-xs text-gray-800 font-medium";
+                        div.innerHTML = `<i class="fa fa-map-marker text-primary mr-1"></i> <strong>${p.nombre}</strong> <span class="text-gray-400">(${p.tipo})</span>`;
+                        div.onclick = () => seleccionarDestino(p);
+                        lista.appendChild(div);
+                    });
+                }
+                lista.style.display = "block";
+            });
+
+            document.addEventListener("click", e => { 
+                if(!e.target.closest(".buscador-container")) lista.style.display = "none"; 
+            });
+        }
+
+        function seleccionarDestino(pozo) {
+            document.getElementById("inputBuscador").value = pozo.nombre;
+            document.getElementById("destinoActual").textContent = pozo.nombre;
+            document.getElementById("listaResultados").style.display = "none";
+            
+            if(marcadorDestino) mapa.removeLayer(marcadorDestino);
+            
+            marcadorDestino = L.marker(pozo.coords).addTo(mapa)
+                .bindPopup(`<b>${pozo.nombre}</b><br>${pozo.tipo}`).openPopup();
+            
+            if(marcadorVehiculo) {
+                trazarRuta(marcadorVehiculo.getLatLng(), L.latLng(pozo.coords));
+            } else {
+                mapa.setView(pozo.coords, 14);
+            }
+        }
+
+        function trazarRuta(origen, destino) {
+            if(controlRuta) mapa.removeControl(controlRuta);
+            
+            controlRuta = L.Routing.control({
+                waypoints: [origen, destino],
+                lineOptions: { styles: [{ color: '#0F4C81', weight: 6, opacity: 0.85 }] },
+                createMarker: () => null,
+                show: false,
+                addWaypoints: false
+            }).addTo(mapa);
+        }
+
+        function iniciarMonitoreoGPS() {
+            viajeActivo = true;
+            if(!navigator.geolocation) {
+                mostrarNotificacion("GPS no soportado en este dispositivo móvil.");
+                return;
+            }
+            watchGPS = navigator.geolocation.watchPosition(procesarPosicion, errorGPS, { 
+                enableHighAccuracy: true, 
+                maximumAge: 0, 
+                timeout: 10000 
+            });
+        }
+
+        function simularGPS(lat, lon, velSimulada) {
+            if(!viajeActivo) return;
+            const artificialPos = {
+                coords: {
+                    latitude: lat,
+                    longitude: lon,
+                    speed: velSimulada / 3.6, // Convierte de km/h a m/s
+                    heading: ultimoRumbo + 10
+                }
+            };
+            procesarPosicion(artificialPos);
+        }
+
+        function procesarPosicion(pos) {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const vel = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+            const rumbo = pos.coords.heading || 0;
+            
+            const veh = solicitudActual.tipoVeh || "liviano";
+            const limite = limites[tipoViaSeleccionada][veh];
+            
+            actualizarVistaPanel(lat, lon, vel, limite);
+            revisarInfraccionesYTelemetria(vel, limite, rumbo);
+            
+            ultimaVel = vel;
+            ultimoRumbo = rumbo;
+        }
+
+        function actualizarVistaPanel(lat, lon, vel, limite) {
+            document.getElementById("velMapa").textContent = vel;
+            const latlng = [lat, lon];
+
+            if(!marcadorVehiculo) {
+                marcadorVehiculo = L.marker(latlng, {
+                    icon: L.icon({
+                        iconUrl: 'https://cdn-icons-png.flaticon.com/32/105/105685.png',
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14]
+                    })
+                }).addTo(mapa);
+                mapa.setView(latlng, 15);
+            } else {
+                marcadorVehiculo.setLatLng(latlng);
+            }
+
+            // Si hay un marcador de destino dinámico, ajusta la ruta en movimiento
+            if (marcadorDestino && controlRuta) {
+                controlRuta.setWaypoints([L.latLng(latlng), marcadorDestino.getLatLng()]);
+            }
+
+            const estadoBox = document.getElementById("estadoVelocidad");
+            if(vel > limite) {
+                estadoBox.innerHTML = `<p class="font-bold text-red-600 text-sm estado-parpadeo">ALERTA</p>
+                                       <p class="text-xs font-bold bg-red-100 text-red-800 px-2 py-0.5 rounded-full mt-1">EXCESO</p>`;
+            } else {
+                estadoBox.innerHTML = `<p class="font-bold text-green-600 text-sm">ESTADO</p>
+                                       <p class="text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full mt-1">NORMAL</p>`;
+            }
+        }
+
+        function revisarInfraccionesYTelemetria(vel, limite, rumbo) {
+            // 1. Exceso de Velocidad franco
+            if(vel > limite) {
+                restarPuntos(1, `Exceso de velocidad registrado: ${vel} km/h de ${limite} km/h permitidos.`);
+            }
+            // 2. Desaceleración / Frenada brusca
+            if((ultimaVel - vel) > 16 && ultimaVel > 15) {
+                restarPuntos(1, `Frenada brusca detectada de ${ultimaVel} a ${vel} km/h.`);
+            }
+            // 3. Aceleración brusca
+            if((vel - ultimaVel) > 18 && vel > 15) {
+                restarPuntos(1, `Aceleración violenta detectada.`);
+            }
+        }
+
+        function restarPuntos(cant, motivo) {
+            puntos = Math.max(0, puntos - cant);
+            document.getElementById("puntos").textContent = puntos;
+            document.getElementById("puntosMapa").textContent = puntos;
+            localStorage.setItem("puntosDrive", puntos);
+
+            mostrarNotificacion(motivo);
+
+            if(puntos <= 0) {
+                setTimeout(() => {
+                    alert("🚫 Viaje suspendido automáticamente: Su cuenta se ha quedado sin puntos de licencia interna.");
+                    finalizarViaje();
+                }, 1500);
+            }
+        }
+
+        function mostrarNotificacion(texto) {
+            const toast = document.getElementById("toastInfraccion");
+            document.getElementById("toastTexto").textContent = texto;
+            toast.classList.remove("hidden");
+            setTimeout(() => toast.classList.add("show"), 50);
+
+            // Cierra automáticamente a los 4 segundos
+            setTimeout(() => {
+                toast.classList.remove("show");
+                setTimeout(() => toast.classList.add("hidden"), 300);
+            }, 4000);
+        }
+
+        function volverADatos() {
+            if(viajeActivo) {
+                if(!confirm("¿Deseas pausar y salir del monitoreo de navegación actual?")) return;
+            }
+            detenerGPS();
+            document.getElementById("pantallaEspera").classList.remove("pantalla-activa");
+            document.getElementById("pantallaMapa").classList.remove("pantalla-activa");
+            document.getElementById("pantallaDatos").classList.add("pantalla-activa");
+            document.getElementById("autorizacionRecibida").classList.add("hidden");
+            document.getElementById("autorizacionRechazada").classList.add("hidden");
+            verificarBloqueo();
+        }
+
+        function detenerGPS() {
+            if(watchGPS) {
+                navigator.geolocation.clearWatch(watchGPS);
+                watchGPS = null;
+            }
+            viajeActivo = false;
+        }
+
+        function finalizarViaje() {
+            detenerGPS();
+            alert("✅ Registro del viaje guardado en el historial local.");
+            volverADatos();
+        }
+
+        function errorGPS(err) {
+            console.warn("Error código de telemetría GPS:", err.message);
+            mostrarNotificacion("Se perdió la precisión fina del GPS de la unidad.");
+        }
+    </script>
 </body>
 </html>
